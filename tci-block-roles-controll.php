@@ -4,7 +4,7 @@
  * Plugin Name: TCI Block Role Control
  * Plugin URI: https://github.com/tcicit/tci-block-roles-control/
  * Description: Allows enabling and disabling blocks based on user roles.
- * Version: 1.20
+ * Version: 1.30
  * Author: Thomas Cigolla
  * Author URI: https://cigolla.ch
  * License: GPL2
@@ -25,11 +25,7 @@ add_action('plugins_loaded', 'block_roles_control_load_textdomain');
 // Get all registered user roles
 function block_roles_control_get_user_roles()
 {
-    global $wp_roles;
-    if (!isset($wp_roles)) {
-        $wp_roles = new WP_Roles();
-    }
-    return $wp_roles->roles;
+    return wp_roles()->roles;
 }
 
 // Blocks blocks for certain user roles
@@ -101,6 +97,17 @@ function block_roles_control_settings_page()
         }
     }
 
+    // Reset all settings if the reset button was clicked
+    if (isset($_POST['block_roles_control_reset']) && check_admin_referer('block_roles_control_reset_action', 'block_roles_control_reset_nonce')) {
+        foreach (array_keys($user_roles) as $role) {
+            delete_option("allowed_blocks_$role");
+        }
+        // Unset selected role to refresh the view
+        $selected_role = '';
+        echo '<div class="updated"><p>' . esc_html__('All settings have been reset.', 'tci-block-roles-control') . '</p></div>';
+    }
+
+
     // Retrieve all registered blocks by category
     $blocks_by_category = block_roles_control_get_registered_blocks();
 ?>
@@ -158,20 +165,17 @@ function block_roles_control_settings_page()
                 </p>
             </form>
         <?php endif; ?>
+
+        <hr style="margin-top: 20px;">
+
+        <h2><?php esc_html_e('Reset Settings', 'tci-block-roles-control'); ?></h2>
+        <p><?php esc_html_e('This will remove all block restrictions for all user roles. The default WordPress settings will apply again.', 'tci-block-roles-control'); ?></p>
+        <form method="post" onsubmit="return confirm('<?php esc_attr_e('Are you sure you want to reset all settings?', 'tci-block-roles-control'); ?>');">
+            <?php wp_nonce_field('block_roles_control_reset_action', 'block_roles_control_reset_nonce'); ?>
+            <p>
+                <input type="submit" name="block_roles_control_reset" class="button button-secondary" value="<?php esc_attr_e('Reset All Settings', 'tci-block-roles-control'); ?>">
+            </p>
+        </form>
     </div>
-
-
-    
-    <script>
-        document.querySelectorAll('.toggle-category').forEach(function(categoryToggle) {
-            categoryToggle.addEventListener('change', function() {
-                const category = this.getAttribute('data-category');
-                document.querySelectorAll('.block-checkbox.' + category).forEach(function(checkbox) {
-                    checkbox.checked = categoryToggle.checked;
-                });
-            });
-        });
-    </script>
 <?php
 }
-
