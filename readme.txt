@@ -1,5 +1,5 @@
 === TCI Block Role Control ===
-Contributors: tcicit
+Contributors: tcigolla
 Donate link: 
 Tags: blocks, user roles
 Requires at least: 5.0
